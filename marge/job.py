@@ -33,7 +33,6 @@ class MergeJob(object):
 
     def execute(self):
         merge_request = self._merge_request
-
         log.info('Processing !%s - %r', merge_request.iid, merge_request.title)
 
         if self._user.id != merge_request.assignee_id:
@@ -56,7 +55,8 @@ class MergeJob(object):
                 return
 
             approvals = merge_request.fetch_approvals()
-            self.update_merge_request_and_accept(approvals)
+            lgtms = merge_request.fetch_lgtms()
+            self.update_merge_request_and_accept(approvals, lgtms)
             log.info('Successfully merged !%s.', merge_request.info['iid'])
         except CannotMerge as err:
             message = "I couldn't merge this branch: %s" % err.reason
@@ -73,7 +73,7 @@ class MergeJob(object):
             self.unassign_from_mr(merge_request)
             raise
 
-    def update_merge_request_and_accept(self, approvals):
+    def update_merge_request_and_accept(self, approvals, lgtms):
         api = self._api
         merge_request = self._merge_request
         updated_into_up_to_date_target_branch = False
@@ -91,6 +91,18 @@ class MergeJob(object):
                     'Insufficient approvals '
                     '(have: {0.approver_usernames} missing: {0.approvals_left})'.format(approvals)
                 )
+
+            lgtms.refetch_info()
+            if not lgtms.sufficient:
+                return
+                # raise CannotMerge(
+                #     'Insufficient approvals '
+                #     '(have: {0.approver_usernames} missing: {0.approvals_left})'.format(lgtms)
+                # )
+            else:
+                lgtm_message = 'Approved by: {0.approver_usernames} '.format(lgtms)
+                merge_request.comment(lgtm_message)
+
             source_project = (
                 self._project if merge_request.source_project_id == self._project.id else
                 Project.fetch_by_id(merge_request.source_project_id, api=api)
@@ -284,7 +296,7 @@ def update_from_target_branch_and_push(
         reviewers=None,
         tested_by=None,
         part_of=None,
-        use_merge_strategy=False,
+        use_merge_strategy=False
 ):
     """Updates `target_branch` with commits from `source_branch`, optionally add trailers and push.
     The update strategy can either be rebase or merge. The default is rebase.

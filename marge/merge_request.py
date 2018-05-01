@@ -1,5 +1,6 @@
 from . import gitlab
 from .approvals import Approvals
+from .lgtms import Lgtms
 
 
 GET, POST, PUT = gitlab.GET, gitlab.POST, gitlab.PUT
@@ -122,5 +123,12 @@ class MergeRequest(gitlab.Resource):
         # 'id' needed for for GitLab 9.2.2 hack (see Approvals.refetch_info())
         info = {'id': self.id, 'iid': self.iid, 'project_id': self.project_id}
         approvals = Approvals(self.api, info)
+        approvals.refetch_info()
+        return approvals
+
+    def fetch_lgtms(self):
+        # 'id' needed for for GitLab 9.2.2 hack (see Approvals.refetch_info())
+        info = {'id': self.id, 'iid': self.iid, 'project_id': self.project_id}
+        approvals = Lgtms(self.api, info)
         approvals.refetch_info()
         return approvals

@@ -24,7 +24,7 @@ class RepoManager(object):
                 user_email=self._user.email,
                 user_name=self._user.name,
             )
-
+            # TODO FIXME
             self._repos[project.id] = repo
 
         return repo
