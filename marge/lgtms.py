@@ -23,9 +23,10 @@ class Lgtms(gitlab.Resource):
             glass_url = '/projects/{0.project_id}/merge_requests/{0.id}/award_emoji?name=radioactive'.format(self)
 
 
-        """ Get list of people who are allowed to approve from master reviewers file """
-        raw_url = '/projects/{0.project_id}/repository/files/lgtm.json/raw?ref=master'.format(self)
-        lgtm_members = self._api.call(GET(raw_url))
+
+
+
+
         awards = self._api.call(GET(get_award_url))
         approvals_left = 2
         seen_self = False
@@ -36,6 +37,13 @@ class Lgtms(gitlab.Resource):
         quick_check = []
         user_url = '/user'.format(self)
         me = self._api.call(GET(user_url))
+        """ Get list of people who are allowed to approve from master reviewers file """
+        raw_url = '/projects/{0.project_id}/repository/files/lgtm.json/raw?ref=master'.format(self)
+        try:
+            lgtm_members = self._api.call(GET(raw_url))
+        except:
+            return
+
         if 0 < len(awards):
             for i in range(len(awards)):
                 if "radioactive" in awards[i]['name']:
