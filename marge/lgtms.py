@@ -37,6 +37,8 @@ class Lgtms(gitlab.Resource):
         quick_check = []
         user_url = '/user'.format(self)
         me = self._api.call(GET(user_url))
+        self._info['approvals_left'] = approvals_left
+        self._info['approved_by'] = approved_by
         """ Get list of people who are allowed to approve from master reviewers file """
         raw_url = '/projects/{0.project_id}/repository/files/lgtm.json/raw?ref=master'.format(self)
         try:
